@@ -2221,34 +2221,36 @@ footer{
 
             <div class="contact-form">
 
-              <form
-    action="https://formspree.io/f/xwlprjyd"
-    method="POST">
+                <form id="contact-form">
 
-    <input
-        type="text"
-        name="name"
-        placeholder="Your Name"
-        required>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="Your Name"
+                        required>
 
-    <input
-        type="email"
-        name="email"
-        placeholder="Your Email"
-        required>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="Your Email"
+                        required>
 
-    <textarea
-        name="message"
-        placeholder="Your Message / Feedback"
-        required></textarea>
+                    <textarea
+                        id="message"
+                        name="message"
+                        placeholder="Your Message / Feedback"
+                        required></textarea>
 
-    <button
-        type="submit"
-        class="submit-btn">
-        Send Message
-    </button>
+                    <button
+                        type="submit"
+                        class="submit-btn"
+                        id="submit-btn">
+                        Send Message
+                    </button>
 
-</form>
+                </form>
             </div>
 
         </div>
@@ -2346,6 +2348,85 @@ revealElements.forEach((element) => {
 
 </script>
 
+<!-- =====================================================
+     SUPABASE CDN & FEEDBACK FORM SUBMISSION
+===================================================== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://bwomloqxmunbbfsndxwc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Vwc8THgCYMFEJJMYRsFywA_YUaPubbY";
+
+const supabaseClient = (typeof supabase !== "undefined" && supabase.createClient)
+    ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    : (window.supabase && window.supabase.createClient
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+        : null);
+
+const contactForm = document.getElementById("contact-form");
+const submitBtn = document.getElementById("submit-btn");
+
+if (contactForm) {
+    contactForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        if (!supabaseClient) {
+            alert("Database connection could not be established. Please check your internet connection and try again.");
+            return;
+        }
+
+        const nameInput = document.getElementById("name");
+        const emailInput = document.getElementById("email");
+        const messageInput = document.getElementById("message");
+
+        const name = nameInput ? nameInput.value.trim() : "";
+        const email = emailInput ? emailInput.value.trim() : "";
+        const message = messageInput ? messageInput.value.trim() : "";
+
+        if (!name || !email || !message) {
+            alert("Please fill in all required fields: Name, Email, and Message.");
+            return;
+        }
+
+        const originalBtnText = submitBtn ? submitBtn.textContent : "Send Message";
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Sending...";
+        }
+
+        try {
+            const { data, error } = await supabaseClient
+                .from("feedback")
+                .insert([
+                    {
+                        name: name,
+                        email: email,
+                        message: message
+                    }
+                ]);
+
+            if (error) {
+                console.error("Supabase submission error:", error);
+                alert("Failed to submit feedback: " + (error.message || "Please try again later."));
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
+                }
+            } else {
+                window.location.href = "success.html";
+            }
+        } catch (err) {
+            console.error("Unexpected submission error:", err);
+            alert("A network error occurred. Please check your internet connection and try again.");
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
+        }
+    });
+}
+</script>
 
 </body>
 </html>
